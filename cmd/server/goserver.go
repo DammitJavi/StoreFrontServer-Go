@@ -37,7 +37,7 @@ func handler(w http.ResponseWriter, r *http.Request){
 
 	// fmt.Fprintf(w, "Hello %s", r.URL.Path[1:])
 
-	
+
 	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s " + "dbname=%s sslmode=disable", host, port, user, dbname)
 
 	db, err := sql.Open("postgres", psqlInfo)
@@ -86,9 +86,6 @@ func handler(w http.ResponseWriter, r *http.Request){
 
 func main(){
 
-
-
-
 	http.HandleFunc("/", handler)
 	fmt.Println("Listening on Port 3000")
 	err := http.ListenAndServe(":3000", nil)
@@ -96,6 +93,5 @@ func main(){
 	if err != nil{
 		panic(err)
 	}
-
 
 }	
