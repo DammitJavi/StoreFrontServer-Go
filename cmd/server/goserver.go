@@ -133,7 +133,7 @@ func mainPageHandler(db *sql.DB) http.HandlerFunc {
 
 func productByIdHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-
+		//Post
 		if r.Method == http.MethodPost {
 			var keys []int
 			var products []productById
@@ -167,8 +167,6 @@ func productByIdHandler(db *sql.DB) http.HandlerFunc {
 			}
 			jData, err := json.Marshal(products)
 
-			fmt.Println(jData)
-
 			if err != nil {
 				fmt.Errorf("Json Marshal error: %v", err)
 			}
@@ -178,7 +176,7 @@ func productByIdHandler(db *sql.DB) http.HandlerFunc {
 			w.Write(jData)
 
 		}else{
-
+			//Get
 			var product2 productById
 			path := strings.TrimPrefix(r.URL.Path, "/api/product/")
 			id := strings.SplitN(path, "/", 2)[0]
@@ -187,7 +185,6 @@ func productByIdHandler(db *sql.DB) http.HandlerFunc {
 			err := rows.Scan( &product2.ID, &product2.Product_name, &product2.Category, &product2.Price, &product2.Sku, &product2.Supplier, &product2.Dimensions, & product2.Status)
 			
 			// fmt.Println(product)
-	
 			
 			if err != nil {
 				fmt.Errorf("Error while getting product by ID: %v", err)
