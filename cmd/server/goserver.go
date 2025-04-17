@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"regexp"
 	"strings"
 
 	"github.com/lib/pq"
@@ -17,6 +18,9 @@ const (
 	port = 5432
 	user = "javierrojas"
 	dbname = "storefront"
+
+	emailRegex = `^[a-zA-Z0-9.+-_]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`
+	passwordRegex = `^[a-zA-Z0-9!#@%\$\&]+$`
 )
 
 // type Inventory struct{
@@ -225,6 +229,22 @@ func userHandler(db *sql.DB) http.HandlerFunc{
 			return
 		}
 
+		emailRe := regexp.MustCompile(emailRegex)
+		
+		if !emailRe.MatchString(user.Email) {
+			log.Println("Email did not meet regex.")
+			http.Error(w, "Email did not meet regex.", http.StatusBadRequest)
+			return
+		}
+		
+		passwordRe := regexp.MustCompile(passwordRegex)
+		
+		if !passwordRe.MatchString(user.Password){
+			log.Println("Password did not meet regex.")
+			http.Error(w, "Password did not meet regex.", http.StatusBadRequest)
+			return
+		}
+
 		securePassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
 
 		if err != nil {
@@ -232,7 +252,6 @@ func userHandler(db *sql.DB) http.HandlerFunc{
 			http.Error(w, "Bcrypt Error.", http.StatusExpectationFailed)
 			return
 		}
-
 
 		_, err2 := db.Exec("INSERT INTO usersdb(username, email, password) VALUES ($1, $2, $3)", user.Username, user.Email, securePassword)
 
