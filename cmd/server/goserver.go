@@ -238,7 +238,7 @@ func userHandler(db *sql.DB) http.HandlerFunc{
 		}
 		
 		passwordRe := regexp.MustCompile(passwordRegex)
-		
+
 		if !passwordRe.MatchString(user.Password){
 			log.Println("Password did not meet regex.")
 			http.Error(w, "Password did not meet regex.", http.StatusBadRequest)
@@ -265,6 +265,48 @@ func userHandler(db *sql.DB) http.HandlerFunc{
 	}
 }
 
+func loginHandler(db *sql.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+
+		if r.Method == http.MethodGet {
+			log.Printf("Method Get is not allowed")
+			http.Error(w, "Method Get is not allowed.", http.StatusBadRequest)
+			return
+		}
+
+		var user users
+		var userQ users
+
+		err := json.NewDecoder(r.Body).Decode(&user)
+
+		if err != nil {
+			log.Printf("Error with request body: %v", err)
+			http.Error(w, "Error with request body", http.StatusBadRequest)
+			return
+		}
+
+		rows := db.QueryRow("SELECT username, password FROM usersdb WHERE username = $1", user.Username)
+		
+		err2 := rows.Scan(&userQ.Username, &userQ.Password)
+
+		if err2 != nil {
+			log.Println("Problem with db query.")
+			http.Error(w, "Problem with db query.", http.StatusBadRequest)
+			return
+		}
+
+		err3 := bcrypt.CompareHashAndPassword([]byte(userQ.Password), []byte(user.Password))
+
+		if err3 != nil {
+			log.Println("Wrong username or password.")
+			http.Error(w, "Wrong username or password.", http.StatusBadRequest)
+			return
+		}
+
+		fmt.Printf("Welcome %s!", userQ.Username)
+
+	}
+}
 
 func main(){
 
@@ -292,6 +334,7 @@ func main(){
 	http.HandleFunc("/api", mainPageHandler(db))
 	http.HandleFunc("/api/product/", productByIdHandler(db))
 	http.HandleFunc("/api/users/", userHandler(db))
+	http.HandleFunc("/api/login/", loginHandler(db))
 
 	fmt.Println("Listening on Port 3000")
 	http.ListenAndServe(":3000", nil)
