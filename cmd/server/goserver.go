@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/lib/pq"
+	"github.com/rs/cors"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -143,6 +144,7 @@ func mainPageHandler(db *sql.DB) http.HandlerFunc {
 
 func productByIdHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		
 		//Post
 		if r.Method == http.MethodPost {
 			var keys []int
@@ -269,7 +271,7 @@ func loginHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		if r.Method == http.MethodGet {
-			log.Printf("Method Get is not allowed")
+			log.Println("Method Get is not allowed")
 			http.Error(w, "Method Get is not allowed.", http.StatusBadRequest)
 			return
 		}
@@ -280,7 +282,7 @@ func loginHandler(db *sql.DB) http.HandlerFunc {
 		err := json.NewDecoder(r.Body).Decode(&user)
 
 		if err != nil {
-			log.Printf("Error with request body: %v", err)
+			log.Printf("Error with request body: %v \n", err)
 			http.Error(w, "Error with request body", http.StatusBadRequest)
 			return
 		}
@@ -328,15 +330,24 @@ func main(){
 
 	fmt.Println("Postgres DB connected.")
 
+	// mux := http.NewServeMux()
+
 	// Bottom code is to test database
 	// http.HandleFunc("/", handler)  
 
-	http.HandleFunc("/api", mainPageHandler(db))
+	http.HandleFunc("/api/", mainPageHandler(db))
 	http.HandleFunc("/api/product/", productByIdHandler(db))
 	http.HandleFunc("/api/users/", userHandler(db))
 	http.HandleFunc("/api/login/", loginHandler(db))
 
+	c := cors.New(cors.Options{
+		AllowedOrigins: []string{"http://localhost:5173"},
+		AllowedMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders: []string{"Content-Type"},
+	})
+
+	handler := c.Handler(http.DefaultServeMux)
 	fmt.Println("Listening on Port 3000")
-	http.ListenAndServe(":3000", nil)
+	http.ListenAndServe(":3000", handler)
 	
 }	
