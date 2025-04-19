@@ -100,6 +100,7 @@ func mainPageHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request){
 
 		if r.Method == http.MethodPost {
+			log.Println("Method not allowed in mainPageHandler.")
 			http.Error(w, "Method not allowed...", http.StatusMethodNotAllowed)
 			return
 		}
@@ -110,7 +111,8 @@ func mainPageHandler(db *sql.DB) http.HandlerFunc {
 	
 		
 		if err != nil {
-			fmt.Errorf("Error retrieving data from database; %v", err)
+			log.Println("Error retrieving data from database.")
+			http.Error(w,"Error retrieving data from database.", http.StatusBadRequest)
 			return 
 		}
 
@@ -119,7 +121,9 @@ func mainPageHandler(db *sql.DB) http.HandlerFunc {
 		for rows.Next(){
 			var inv MainPageInv
 			if err := rows.Scan(&inv.ID, &inv.Product_name, &inv.Category, &inv.Price, &inv.Sku, &inv.Dimensions, &inv.Status ); err != nil {
-				fmt.Errorf("Error getting from db: %v", err)
+				log.Println("Error getting from db.")
+				http.Error(w,"Error getting from db.", http.StatusBadRequest)
+				return
 			}
 			mainInv = append(mainInv, inv)
 		}
@@ -131,7 +135,8 @@ func mainPageHandler(db *sql.DB) http.HandlerFunc {
 
 		// fmt.Println(string(jData))
 		if err != nil {
-			fmt.Errorf("Error with jData: %v", err)
+			log.Println("Error with jData.")
+			http.Error(w,"Error with jData.", http.StatusBadRequest)
 			return
 		}
 
@@ -153,14 +158,16 @@ func productByIdHandler(db *sql.DB) http.HandlerFunc {
 			err := json.NewDecoder(r.Body).Decode(&keys)
 
 			if err != nil {
-				fmt.Errorf("Error in post for cart items: %v", err)
+				log.Println("Error in decoding post for cart items.");
+				http.Error(w,"Error in decoding post for cart items.", http.StatusBadRequest)
 				return
 			}
 
 			rows, err := db.Query("SELECT id, product_name, category, price, sku, supplier, dimensions, status from Inventory where id = ANY($1)", pq.Array(keys) )
 			
 			if err != nil {
-				fmt.Errorf("Error with query for keys: %v", err)
+				log.Println("Error with query for keys")
+				http.Error(w,"Error with query for keys.", http.StatusBadRequest)
 				return
 			}
 
@@ -170,7 +177,9 @@ func productByIdHandler(db *sql.DB) http.HandlerFunc {
 				var product productById
 
 				if err := rows.Scan(&product.ID, &product.Product_name, &product.Category, &product.Price, &product.Sku, &product.Supplier, &product.Dimensions, & product.Status); err != nil {
-					fmt.Errorf("Error with single item in keys: %v", err)
+					log.Println("Error with single item in keys.")
+					http.Error(w, "Error with single item in keys.", http.StatusBadRequest)
+					return
 				}
 				products = append(products, product)
 
@@ -178,7 +187,9 @@ func productByIdHandler(db *sql.DB) http.HandlerFunc {
 			jData, err := json.Marshal(products)
 
 			if err != nil {
-				fmt.Errorf("Json Marshal error: %v", err)
+				log.Println("Json Marshal error.")
+				http.Error(w, "Json Marshal error.", http.StatusBadRequest)
+				return
 			}
 
 			w.Header().Set("Content-Type", "application/json")
@@ -196,14 +207,17 @@ func productByIdHandler(db *sql.DB) http.HandlerFunc {
 			// fmt.Println(product)
 
 			if err != nil {
-				fmt.Errorf("Error while getting product by ID: %v", err)
+				log.Println("Error while getting product by ID.")
+				http.Error(w,"Error while getting product by ID.", http.StatusBadRequest)
+				return
 			}
 			
 			jData, err := json.Marshal(product2)
 	
 			if err != nil {
-				fmt.Errorf("Error while converting product by id into JSON: %v", err)
-	
+				log.Println("Error while converting product by id into JSON.")
+				http.Error(w,"Error while converting product by id into JSON.", http.StatusBadRequest)
+				return
 			}
 	
 			w.Header().Set("Content-Type", "application/json")
@@ -227,7 +241,8 @@ func userHandler(db *sql.DB) http.HandlerFunc{
 		err := json.NewDecoder(r.Body).Decode(&user)
 
 		if err != nil {
-			http.Error(w, "User info error", http.StatusBadRequest)
+			log.Println("User info error.")
+			http.Error(w, "User info error.", http.StatusBadRequest)
 			return
 		}
 
@@ -263,7 +278,7 @@ func userHandler(db *sql.DB) http.HandlerFunc{
 			return
 		}
 
-		fmt.Printf("User %s has been added.", user.Username)
+		fmt.Printf("User %s has been added.\n", user.Username)
 	}
 }
 
@@ -305,7 +320,7 @@ func loginHandler(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
-		fmt.Printf("Welcome %s!", userQ.Username)
+		fmt.Printf("Welcome %s!\n", userQ.Username)
 
 	}
 }
